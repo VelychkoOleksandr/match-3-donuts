@@ -22,7 +22,7 @@ class ManuState extends Phaser.State {
 
 		//Set sfx button
 		const btn_sfx = this.add.sprite(0, 5, 'sfx');
-		btn_sfx.scale.setTo(0.75, 0.75);
+		btn_sfx.scale.setTo(0.75);
 		btn_sfx.x = this.windowSize.width - btn_sfx.width - 5; 
 
 		//Set logo
