@@ -148,7 +148,7 @@ class GameState extends Phaser.State {
       this.drawTiles();
       // this.drawTiles();
 
-      this.getMatch(this.tilesArray);
+      console.log(this.getMatch(this.tilesArray));
       return;
     };
 
@@ -194,32 +194,52 @@ class GameState extends Phaser.State {
   };
 
   getMatch(matrix) {
-    // console.log('match');
     const matchList = [];
 
     //Horizontal Check Match
     for (let row = 0; row < this.gridSize.height; row++) {
       let match = 1;
-      // console.log('Row:', row);
+
       for (let col = 0; col < this.gridSize.width; col++) {
 
-        if (matrix[row][col] === matrix[row][col + 1] && matrix[row][col + 1] != undefined) {
-          // console.log('match');
-          match += 1;
-        } else if (matrix[row][col + 1] != undefined) {
-          // console.log('Current match: ', match, startPoint);
-
+        //Check If Last Tile
+        if (col + 1 === this.gridSize.width) {
           if (match >= 3) {
-            // console.log('LOOK HERE hor: ', match);
+            console.log('Add Horizontal');
             matchList.push({
               length: match, startPoint: {
                 row: row,
                 col: col + 1 - match
-              }, horizontal: true
+              }, horizontal: true 
             });
+            break;
+          };
+        };
+
+        if (col != this.gridSize.height - 1) {
+          //Increase Match Value
+          if (matrix[row][col] === matrix[row][col + 1]) {
+            match += 1;
           };
 
-          match = 1;
+          //Reset Match Value
+          if (matrix[row][col] != matrix[row][col + 1] && match < 3) {
+            match = 1;
+          };
+
+          //Save Match Value
+          if (matrix[row][col] != matrix[row][col + 1]) {
+            if (match >= 3) {
+              console.log('Add Horizontal');
+              matchList.push({
+                length: match, startPoint: {
+                  row: row,
+                  col: col + 1 - match
+                }, horizontal: true
+              });
+              match = 1;
+            };
+          };
         };
       };
     };
@@ -227,46 +247,38 @@ class GameState extends Phaser.State {
     // Vertical Check Match
     for (let col = 0; col < this.gridSize.width; col++) {
       let match = 1;
-      // console.log('match on top level:', match);
 
-      // console.log('Col:', col);
       for (let row = 0; row < this.gridSize.height; row++) {
-
-        // console.log(col, row, match, matrix[row][col]);
 
         //Check If Last Tile
         if (row + 1 === this.gridSize.height) {
           if (match >= 3) {
+            console.log('Add Vertical');
             matchList.push({
               length: match, startPoint: {
                 row: row + 1 - match,
                 col: col
               }, vertical: true
             });
-            // match = 1;
             break;
           }
         }
 
         if (row != this.gridSize.height - 1) {
-          //Increase MAtch Value
+          //Increase Match Value
           if (matrix[row][col] === matrix[row + 1][col]) {
-            // console.log('matrix[row][col] === matrix[row + 1][col]');
             match += 1;
-            // console.log('Should increas match: ', match);
           };
 
           //Reset Match Value
           if (matrix[row][col] != matrix[row + 1][col] && match < 3) {
-            // console.log('matrix[row][col] != matrix[row + 1][col] && match < 3');
             match = 1;
           };
 
           //Save Match Value
           if (matrix[row][col] != matrix[row + 1][col]) {
-            // console.log('matrix[row][col] != matrix[row + 1][col]');
             if (match >= 3) {
-              // console.log('LOOK HERE ver: ', match);
+              console.log('Add Vertical');
               matchList.push({
                 length: match, startPoint: {
                   row: row + 1 - match,
@@ -281,7 +293,11 @@ class GameState extends Phaser.State {
     };
 
     console.log('Match: ', matchList);
-    console.log('End test');
+    // console.log('End test');
+    // console.log();
+    return matchList[0] === undefined
+            ? false
+            : true;
   };
 };
 
