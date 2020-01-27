@@ -27,6 +27,8 @@ class GameState extends Phaser.State {
 
     this.timer = 10;
     this.restOfTime = this.timer;
+
+    this.cursorDisabled = false;
   }
 
   preload() {
@@ -40,14 +42,6 @@ class GameState extends Phaser.State {
     this.load.image('gem_04', './assets/images/game/gem-04.png');
     this.load.image('gem_05', './assets/images/game/gem-05.png');
     this.load.image('gem_06', './assets/images/game/gem-06.png');
-    // this.load.image('gem_07', './assets/images/game/gem-07.png');
-    // this.load.image('gem_08', './assets/images/game/gem-08.png');
-    // this.load.image('gem_09', './assets/images/game/gem-09.png');
-    // this.load.image('gem_10', './assets/images/game/gem-10.png');
-    // this.load.image('gem_11', './assets/images/game/gem-11.png');
-    // this.load.image('gem_12', './assets/images/game/gem-12.png');
-
-    this.load.image('hand', './assets/images/game/hand.png');
 
     console.log('GameState');
   };
@@ -59,7 +53,7 @@ class GameState extends Phaser.State {
 
     //Set score board 
     const scroreBoard = this.add.sprite(-65, 0, 'score');
-    this.playAreaSize.offsetY = scroreBoard.height - 50;
+    this.playAreaSize.offsetY = scroreBoard.height - 50; 
 
     //Score text
     this.scoreText = this.add.text(scroreBoard.width / 4 + 20, scroreBoard.height / 2 - 40, '0', { fontSize: '44px', fill: '#fff' });
@@ -145,6 +139,9 @@ class GameState extends Phaser.State {
   };
 
   selectTile(tile) {
+
+    if (this.cursorDisabled) return; 
+    
     tile.alpha = 0.65;
 
     //Swap Tiles
@@ -312,7 +309,12 @@ class GameState extends Phaser.State {
 
   destroyMatchedTiles() {
     const matchedTiles = this.getMatch(this.tilesArray);
-    if (matchedTiles[0] === undefined) return;
+    if (matchedTiles[0] === undefined) {
+      this.cursorDisabled = false;
+      return;
+    };
+
+    this.cursorDisabled = true;
 
     const destructionArray = [];
 
@@ -434,7 +436,6 @@ class GameState extends Phaser.State {
 
   startTimer() {
     this.timeIntervalID = setInterval(() => { this.updateTimer() }, 1000);
-    console.log(this.timeIntervalID);
   };
 
   updateTimer() {
@@ -442,11 +443,13 @@ class GameState extends Phaser.State {
 
       this.restOfTime = this.restOfTime - 1;
       this.timeText.text = `Time: ${this.restOfTime}`;
+      if (this.restOfTime < 1) this.cursorDisabled = true;
       
     } else {
       //Go to result screen
       this.game.gameScore = this.score;
-      clearInterval(this.timeIntervalID);  
+      clearInterval(this.timeIntervalID);
+      this.state.start('ResultState');                        
     };
   };
 };
