@@ -34,12 +34,12 @@ class ManuState extends Phaser.State {
 		btn_play.events.onInputDown.add(this.playGame, this);
 	};
 
-	playGame(sprite, pointer) {
+	playGame(sprite) {
 		sprite.alpha = 0.85;
 		//---Kind of animation ---\\
-		// setTimeout(() => { sprite.alpha = 1; }, 100);	
-		// setTimeout(() => { this.state.start('GameState'); }, 500);
-		this.state.start('GameState');  
+		setTimeout(() => { sprite.alpha = 1; }, 100);	
+		setTimeout(() => { this.state.start('GameState'); }, 500);
+		// this.state.start('GameState');  
 	};
 
 }

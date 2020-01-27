@@ -42,8 +42,6 @@ class GameState extends Phaser.State {
     this.load.image('gem_04', './assets/images/game/gem-04.png');
     this.load.image('gem_05', './assets/images/game/gem-05.png');
     this.load.image('gem_06', './assets/images/game/gem-06.png');
-
-    console.log('GameState');
   };
 
   create() {
@@ -155,12 +153,9 @@ class GameState extends Phaser.State {
         return;
       };
 
-      //Swap
+      //Swap Tiles
       this.swapTiles(tile);
-      // this.destroyMatchedTiles();
 
-      //Destroy tiles
-      // setTimeout(() => { this.destroyMatchedTiles(); }, 500);  
       return;
     };
 
@@ -168,7 +163,6 @@ class GameState extends Phaser.State {
   };
 
   swapTiles(tile) {
-    // console.log(JSON.stringify(this.tilesArray));
 
     const bufferFirstValue = this.tilesArray[tile.row][tile.col];
     const bufferSecondValue = this.tilesArray[this.selectedTile.row][this.selectedTile.col];
@@ -178,8 +172,7 @@ class GameState extends Phaser.State {
 
     this.drawTiles();
 
-    // console.log(JSON.stringify(this.tilesArray));
-
+    //Visual Swap
     // [this.selectedTile.position.x, tile.position.x] = [tile.position.x, this.selectedTile.position.x];
     // [this.selectedTile.position.y, tile.position.y] = [tile.position.y, this.selectedTile.position.y];
 
@@ -302,8 +295,6 @@ class GameState extends Phaser.State {
       };
     };
 
-    // console.log('Match: ', matchList);
-
     return matchList;
   };
 
@@ -323,7 +314,7 @@ class GameState extends Phaser.State {
       destructionArray[i] = false;
     };
 
-    //Add destruction item's inde to destructionArray
+    //Add destruction item's index to destructionArray
     matchedTiles.map(({ length, startPoint: { row, col }, horizontal }) => {
 
       //Horizontal Matches
@@ -440,7 +431,7 @@ class GameState extends Phaser.State {
 
   updateTimer() {
     if (this.restOfTime > 0) { 
-
+      //Update Time
       this.restOfTime = this.restOfTime - 1;
       this.timeText.text = `Time: ${this.restOfTime}`;
       if (this.restOfTime < 1) this.cursorDisabled = true;
