@@ -53,8 +53,6 @@ class GameState extends Phaser.State {
 
     //Show Donuts
     this.drawTiles();
-
-    this.getMatch(this.tilesArray);
   };
 
   generateTilesMatrix() {
@@ -63,9 +61,12 @@ class GameState extends Phaser.State {
 
     for (let row = 0; row < this.gridSize.height; row++) {
       for (let col = 0; col < this.gridSize.width; col++) {
+
         let randomTileIndex = Math.floor(Math.random() * (this.tileList.length));
         tilesRow.push(this.tileList[randomTileIndex]);
+
       };
+
       tilesMatrix.push(tilesRow);
       tilesRow = [];
     };
@@ -74,7 +75,6 @@ class GameState extends Phaser.State {
   }
 
   drawTiles() {
-    // console.log('drawTiles()');
     let tilesGroup;
 
     //Create Tiles Group to hol All Tiles
@@ -83,7 +83,6 @@ class GameState extends Phaser.State {
       tilesGroup = this.tilesGroup;
     } else {
       tilesGroup = this.add.group();
-      // console.log(tilesGroup);
     };
 
     //Reset all children(required for redraw)
@@ -112,6 +111,8 @@ class GameState extends Phaser.State {
     };
 
     this.tilesGroup = tilesGroup;
+
+    this.destroyMatchedTiles();
   };
 
   setTileSize(tile) {
@@ -133,10 +134,6 @@ class GameState extends Phaser.State {
       tile.alpha = 1;
       this.selectedTile.alpha = 1;
 
-      //Some Swap Animation 
-      // this.add.tween(tile).to({ alpha: 1 }, 200, "Linear", true);
-      // this.add.tween(this.selectedTile).to({ alpha: 1 }, 200, "Linear", true);
-
       //Check if swap available
       if (!this.isSwapAvailable(this.selectedTile, tile)) {
         this.selectedTile = null;
@@ -145,10 +142,10 @@ class GameState extends Phaser.State {
 
       //Swap
       this.swapTiles(tile);
-      this.drawTiles();
-      // this.drawTiles();
+      // this.destroyMatchedTiles();
 
-      console.log(this.getMatch(this.tilesArray));
+      //Destroy tiles
+      // setTimeout(() => { this.destroyMatchedTiles(); }, 500);  
       return;
     };
 
@@ -163,6 +160,8 @@ class GameState extends Phaser.State {
 
     this.tilesArray[tile.row][tile.col] = bufferSecondValue;
     this.tilesArray[this.selectedTile.row][this.selectedTile.col] = bufferFirstValue;
+
+    this.drawTiles();
 
     // console.log(JSON.stringify(this.tilesArray));
 
@@ -205,12 +204,11 @@ class GameState extends Phaser.State {
         //Check If Last Tile
         if (col + 1 === this.gridSize.width) {
           if (match >= 3) {
-            console.log('Add Horizontal');
             matchList.push({
               length: match, startPoint: {
                 row: row,
                 col: col + 1 - match
-              }, horizontal: true 
+              }, horizontal: true
             });
             break;
           };
@@ -230,7 +228,6 @@ class GameState extends Phaser.State {
           //Save Match Value
           if (matrix[row][col] != matrix[row][col + 1]) {
             if (match >= 3) {
-              console.log('Add Horizontal');
               matchList.push({
                 length: match, startPoint: {
                   row: row,
@@ -253,12 +250,11 @@ class GameState extends Phaser.State {
         //Check If Last Tile
         if (row + 1 === this.gridSize.height) {
           if (match >= 3) {
-            console.log('Add Vertical');
             matchList.push({
               length: match, startPoint: {
                 row: row + 1 - match,
                 col: col
-              }, vertical: true
+              }, horizontal: false
             });
             break;
           }
@@ -278,12 +274,11 @@ class GameState extends Phaser.State {
           //Save Match Value
           if (matrix[row][col] != matrix[row + 1][col]) {
             if (match >= 3) {
-              console.log('Add Vertical');
               matchList.push({
                 length: match, startPoint: {
                   row: row + 1 - match,
                   col: col
-                }, vertical: true
+                }, horizontal: false
               });
               match = 1;
             };
@@ -293,11 +288,130 @@ class GameState extends Phaser.State {
     };
 
     console.log('Match: ', matchList);
-    // console.log('End test');
-    // console.log();
-    return matchList[0] === undefined
-            ? false
-            : true;
+
+    return matchList;
+  };
+
+  destroyMatchedTiles() {
+    const matchedTiles = this.getMatch(this.tilesArray);
+    if (matchedTiles[0] === undefined) return;
+
+    const destructionArray = [];
+
+    //Fill destructionArray with false values
+    for (let i = 0; i < this.gridSize.width * this.gridSize.height; i++) {
+      destructionArray[i] = false;
+    };
+
+    //Add destruction item's inde to destructionArray
+    matchedTiles.map(({ length, startPoint: { row, col }, horizontal }) => {
+
+      //Horizontal Matches
+      if (horizontal) {
+        const startPosition = (row) * this.gridSize.width + col;
+        const endPosition = startPosition + length;
+
+        for (let i = startPosition; i < endPosition; i++) {
+          destructionArray[i] = true;
+          this.increseScore(1);
+        };
+
+      };
+
+      //Vertical Matches
+      if (!horizontal) {
+        const startPosition = (row) * this.gridSize.width + col;
+        const endPosition = startPosition + (length - 1) * this.gridSize.width;
+
+        for (let i = startPosition; i <= endPosition; i += this.gridSize.width) {
+          destructionArray[i] = true;
+          this.increseScore(1);
+        };
+      };
+    });
+
+    //Remove Children
+    for (let i = 0; i < this.gridSize.width * this.gridSize.height; i++) {
+      if (destructionArray[i]) {
+        setTimeout(() => {
+          this.tilesGroup.children[i].alpha = 0.5;
+        }, 1000);
+      };
+    };
+
+    setTimeout(() => {
+      this.updateTilesArray(destructionArray);
+    }, 500);
+  };
+
+  updateTilesArray(destructionArray) {
+
+    //Build Deleted Objects Map
+    let index = 0;
+
+    // const tilesArrayShallowCopy = this.tilesArray.concat(); //.concat() and spread don't give shallow copy. Keeps refer to original array. Babel bug?
+    // const tilesArrayShallowCopy = [...this.tilesArray];
+    const tilesArrayShallowCopy = [...this.tilesArray];
+    const tilesArrayShallowCopyString = JSON.stringify(this.tilesArray);
+
+    for (let row = 0; row < this.tilesArray.length; row++) {
+      for (let col = 0; col < this.tilesArray[row].length; col++) {
+        tilesArrayShallowCopy[row][col] = destructionArray[index];
+        index++;
+      };
+    };
+
+    this.tilesArray = JSON.parse(tilesArrayShallowCopyString);
+
+    //Delete Matched Tiles From tilesArray
+    for (let row = 0; row < this.tilesArray.length; row++) {
+      for (let col = 0; col < this.tilesArray[row].length; col++) {
+        if (tilesArrayShallowCopy[row][col]) {
+          tilesArrayShallowCopy[row][col] = null;
+        } else {
+          tilesArrayShallowCopy[row][col] = this.tilesArray[row][col];
+        };
+      };
+    };
+
+
+    //Shift Values Down, 'null' up. Iteration required to up all 'null' above values
+    for (let iteration = 0; iteration < this.tilesArray.length; iteration++) {
+      for (let row = this.tilesArray.length - 1; row > 0; row--) {
+        for (let col = this.tilesArray[row].length - 1; col > -1; col--) {
+
+          if (tilesArrayShallowCopy[row][col] === null) {
+
+            //Swap values if required
+            if (tilesArrayShallowCopy[row - 1][col] !== null) {
+
+              tilesArrayShallowCopy[row][col] = tilesArrayShallowCopy[row - 1][col];
+              tilesArrayShallowCopy[row - 1][col] = null;
+            };
+          };
+        };
+      };
+    };
+
+    console.log(JSON.stringify(tilesArrayShallowCopy));
+
+    //Fill arrray where empty('null') 
+    for (let row = 0; row < this.tilesArray.length; row++) {
+      for (let col = 0; col < this.tilesArray[row].length; col++) {
+        if (tilesArrayShallowCopy[row][col] === null) {
+          let randomTileIndex = Math.floor(Math.random() * (this.tileList.length));
+          tilesArrayShallowCopy[row][col] = this.tileList[randomTileIndex];
+        };
+      };
+    };
+
+    this.tilesArray = tilesArrayShallowCopy;
+
+    setTimeout(() => { this.drawTiles(); }, 1000);
+  };
+
+  increseScore(score) {
+    console.log(score * 5);
   };
 };
 
