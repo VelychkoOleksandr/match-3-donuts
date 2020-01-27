@@ -36,8 +36,20 @@ class ManuState extends Phaser.State {
 		btn_play.scale.setTo(0.95);
 		btn_play.x = (this.windowSize.width / 2) - (btn_play.width / 2);
 		btn_play.y = logo.y + logo.height + 30;
+
+		//Click button event
+		btn_play.inputEnabled = true;
+		btn_play.events.onInputDown.add(this.playGame, this);
+	};
+
+	playGame(sprite, pointer) {
+		sprite.alpha = 0.85;
+		//---Kind of animation ---\\
+		// setTimeout(() => { sprite.alpha = 1; }, 100);	
+		// setTimeout(() => { this.state.start('GameState'); }, 500);
+		this.state.start('GameState');  
 	};
 
 }
 
-export default ManuState;  
+export default ManuState;   
