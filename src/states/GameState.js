@@ -25,7 +25,7 @@ class GameState extends Phaser.State {
     this.score = 0;
     this.scoreText = null;
 
-    this.timer = 10;
+    this.timer = 120;
     this.restOfTime = this.timer;
 
     this.cursorDisabled = false;
@@ -42,6 +42,9 @@ class GameState extends Phaser.State {
     this.load.image('gem_04', './assets/images/game/gem-04.png');
     this.load.image('gem_05', './assets/images/game/gem-05.png');
     this.load.image('gem_06', './assets/images/game/gem-06.png');
+
+    this.load.audio('select', './assets/audio/select-1.mp3');
+    this.load.audio('kill', './assets/audio/kill.mp3');
   };
 
   create() {
@@ -51,17 +54,25 @@ class GameState extends Phaser.State {
 
     //Set score board 
     const scroreBoard = this.add.sprite(-65, 0, 'score');
-    this.playAreaSize.offsetY = scroreBoard.height - 50; 
+    this.playAreaSize.offsetY = scroreBoard.height - 50;
 
     //Score text
     this.scoreText = this.add.text(scroreBoard.width / 4 + 20, scroreBoard.height / 2 - 40, '0', { fontSize: '44px', fill: '#fff' });
 
     //Score text
-    this.timeText = this.add.text(this.game.width - 250, scroreBoard.height / 2 - 40, `Time: ${this.timer}`, { fontSize: '44px', fill: '#000' });     
+    this.timeText = this.add.text(this.game.width - 250, scroreBoard.height / 2 - 40, `Time: ${this.timer}`, { fontSize: '44px', fill: '#000' });
+
+    //Add background music
+    this.killMusic = this.add.audio('kill');
+    this.selectMusic = this.add.audio('select');
 
     //Show Donuts
-    this.startTimer();
-    this.drawTiles();
+    setTimeout(() => {
+      this.startTimer();
+      this.drawTiles();
+    }, 200);
+    // this.startTimer();
+    // this.drawTiles();
 
   };
 
@@ -138,9 +149,10 @@ class GameState extends Phaser.State {
 
   selectTile(tile) {
 
-    if (this.cursorDisabled) return; 
-    
+    if (this.cursorDisabled) return;
+
     tile.alpha = 0.65;
+    this.selectMusic.play();
 
     //Swap Tiles
     if (this.selectedTile) {
@@ -166,6 +178,29 @@ class GameState extends Phaser.State {
 
     const bufferFirstValue = this.tilesArray[tile.row][tile.col];
     const bufferSecondValue = this.tilesArray[this.selectedTile.row][this.selectedTile.col];
+
+    {
+      const tilesArrayShallowCopy = JSON.parse(JSON.stringify(this.tilesArray));
+      tilesArrayShallowCopy[tile.row][tile.col] = bufferSecondValue;
+      tilesArrayShallowCopy[this.selectedTile.row][this.selectedTile.col] = bufferFirstValue;
+
+      if (this.getMatch(tilesArrayShallowCopy)[0] === undefined) {
+        this.cursorDisabled = true;
+        //Visual Swap
+        [this.selectedTile.position.x, tile.position.x] = [tile.position.x, this.selectedTile.position.x];
+        [this.selectedTile.position.y, tile.position.y] = [tile.position.y, this.selectedTile.position.y];
+
+        setTimeout(() => {
+          //Visual Swap BAck
+          [this.selectedTile.position.x, tile.position.x] = [tile.position.x, this.selectedTile.position.x];
+          [this.selectedTile.position.y, tile.position.y] = [tile.position.y, this.selectedTile.position.y];
+          this.selectedTile = null;
+          this.cursorDisabled = false;
+        }, 200);
+        
+        return;
+      };
+    }
 
     this.tilesArray[tile.row][tile.col] = bufferSecondValue;
     this.tilesArray[this.selectedTile.row][this.selectedTile.col] = bufferFirstValue;
@@ -350,6 +385,8 @@ class GameState extends Phaser.State {
       };
     };
 
+    this.killMusic.play();
+
     setTimeout(() => {
       this.updateTilesArray(destructionArray);
     }, 500);
@@ -416,7 +453,7 @@ class GameState extends Phaser.State {
 
     this.tilesArray = tilesArrayShallowCopy;
 
-    setTimeout(() => { this.drawTiles(); }, 1250); 
+    setTimeout(() => { this.drawTiles(); }, 2000); 
   };
 
   increseScore(score) {
@@ -430,17 +467,17 @@ class GameState extends Phaser.State {
   };
 
   updateTimer() {
-    if (this.restOfTime > 0) { 
+    if (this.restOfTime > 0) {
       //Update Time
       this.restOfTime = this.restOfTime - 1;
       this.timeText.text = `Time: ${this.restOfTime}`;
-      if (this.restOfTime < 1) this.cursorDisabled = true;
-      
+      if (this.restOfTime < 2) this.cursorDisabled = true;
+
     } else {
       //Go to result screen
       this.game.gameScore = this.score;
       clearInterval(this.timeIntervalID);
-      this.state.start('ResultState');                        
+      this.state.start('ResultState');
     };
   };
 };
