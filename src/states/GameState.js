@@ -21,6 +21,12 @@ class GameState extends Phaser.State {
 
     this.selectedTile = null;
     this.tilesGroup = null;
+
+    this.score = 0;
+    this.scoreText = null;
+
+    this.timer = 10;
+    this.restOfTime = this.timer;
   }
 
   preload() {
@@ -51,8 +57,20 @@ class GameState extends Phaser.State {
     const bg = this.add.sprite(-20, -20, 'background');
     bg.scale.setTo(0.95);
 
+    //Set score board 
+    const scroreBoard = this.add.sprite(-65, 0, 'score');
+    this.playAreaSize.offsetY = scroreBoard.height - 50;
+
+    //Score text
+    this.scoreText = this.add.text(scroreBoard.width / 4 + 20, scroreBoard.height / 2 - 40, '0', { fontSize: '44px', fill: '#fff' });
+
+    //Score text
+    this.timeText = this.add.text(this.game.width - 250, scroreBoard.height / 2 - 40, `Time: ${this.timer}`, { fontSize: '44px', fill: '#000' });     
+
     //Show Donuts
+    this.startTimer();
     this.drawTiles();
+
   };
 
   generateTilesMatrix() {
@@ -287,7 +305,7 @@ class GameState extends Phaser.State {
       };
     };
 
-    console.log('Match: ', matchList);
+    // console.log('Match: ', matchList);
 
     return matchList;
   };
@@ -393,8 +411,6 @@ class GameState extends Phaser.State {
       };
     };
 
-    console.log(JSON.stringify(tilesArrayShallowCopy));
-
     //Fill arrray where empty('null') 
     for (let row = 0; row < this.tilesArray.length; row++) {
       for (let col = 0; col < this.tilesArray[row].length; col++) {
@@ -407,12 +423,32 @@ class GameState extends Phaser.State {
 
     this.tilesArray = tilesArrayShallowCopy;
 
-    setTimeout(() => { this.drawTiles(); }, 1000);
+    setTimeout(() => { this.drawTiles(); }, 1250); 
   };
 
   increseScore(score) {
-    console.log(score * 5);
+    this.score += score * 25;
+
+    this.scoreText.text = this.score;
+  };
+
+  startTimer() {
+    this.timeIntervalID = setInterval(() => { this.updateTimer() }, 1000);
+    console.log(this.timeIntervalID);
+  };
+
+  updateTimer() {
+    if (this.restOfTime > 0) { 
+
+      this.restOfTime = this.restOfTime - 1;
+      this.timeText.text = `Time: ${this.restOfTime}`;
+      
+    } else {
+      //Go to result screen
+      this.game.gameScore = this.score;
+      clearInterval(this.timeIntervalID);  
+    };
   };
 };
 
-export default GameState;  
+export default GameState;   
